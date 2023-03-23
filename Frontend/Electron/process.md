@@ -99,3 +99,70 @@ For example we need a webpack  `electron_main_config.js`
   },
 ];
 ```
+
+## What is render process
+
+#
+
+> Render process will be the frontend, we can use different frontend framework such as React | Vue.
+
+**How to use React + Electron**
+
+Step 1: Decide use which framework as your based framework
+
+It could be use electron as based framework, then try to figure out how to make React fit into it, or we can do other way around.
+
+Recommend to use React as based framework, since we don't need to worry about webpack for React build(render process build), CRA will help us to do it. 
+
+Step 2: Create react app
+
+Step 3: Install electron-forge
+
+```js
+npm install --save-dev @electron-forge/cli
+
+npx electron-forge import
+```
+
+Should see following changes in `package.json`
+```json
+"start": "electron-forge start",
+"package": "electron-forge package",
+"make": "electron-forge make"
+```
+
+Step 4: Make changes in `index.ts`
+
+**Change web view load path**
+
+Since in the development mode, we are loading frontend from `localhost:3000`, but in production mode we are loading it from build `index.html`
+```js
+mainWindow.loadURL(isDev
+      ? "http://localhost:3000"
+      : `file://${path.join(__dirname, "../../build/index.html")}`,
+);
+```
+
+**Load compiled preload.js file**
+
+```js
+ mainWindow = new BrowserWindow({
+    width: electronScreen.getPrimaryDisplay().workArea.width,
+    height: electronScreen.getPrimaryDisplay().workArea.height,
+    show: false,
+    backgroundColor: "white",
+    webPreferences: {
+      preload: path.join(
+        __dirname,
+        "../../.electronMainProcessWebpack/preload/index.js",
+      ),
+    },
+  });
+  ```
+
+
+Step 5: Start Script
+```json
+"dev-windows-start": "cross-env concurrently \"run-s build-electron-main dev\" \"wait-on http://localhost:3000 && npm run electron-app-start\"",
+```
+
