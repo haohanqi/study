@@ -108,27 +108,39 @@ For example we need a webpack  `electron_main_config.js`
 
 **How to use React + Electron**
 
-Step 1: Decide use which framework as your based framework
-
-It could be use electron as based framework, then try to figure out how to make React fit into it, or we can do other way around.
-
-Recommend to use React as based framework, since we don't need to worry about webpack for React build(render process build), CRA will help us to do it. 
-
-Step 2: Create react app
-
-Step 3: Install electron-forge
-
-```js
-npm install --save-dev @electron-forge/cli
-
-npx electron-forge import
+Step 1: Use `electron-forge` to init project with `webpack`
+```
+npm init electron-app@latest my-app -- --template=webpack
 ```
 
-Should see following changes in `package.json`
-```json
-"start": "electron-forge start",
-"package": "electron-forge package",
-"make": "electron-forge make"
+Step 2: Config react webpack
+```
+npm install --save-dev @babel/core @babel/preset-react babel-loader
+```
+
+`webpack.rules.js`
+```
+module.exports = [
+  // ... existing loader config ...
+  {
+    test: /\.jsx?$/,
+    use: {
+      loader: 'babel-loader',
+      options: {
+        exclude: /node_modules/,
+        presets: ['@babel/preset-react']
+      }
+    }
+  },
+  // ... existing loader config ...
+]
+```
+> To notice we have to config react webpack by ourself, not like just use CRA script.
+
+Step 3: Install React
+
+```js
+npm install --save react react-dom
 ```
 
 Step 4: Make changes in `index.ts`
@@ -160,10 +172,10 @@ mainWindow.loadURL(isDev
   });
   ```
 
-
 Step 5: Start Script
 ```json
-"dev-windows-start": "cross-env concurrently \"run-s build-electron-main dev\" \"wait-on http://localhost:3000 && npm run electron-app-start\"",
+"start":"electron-forge start"
+"dev-windows-start": "cross-env concurrently \"run-s build-electron-main dev\" \"wait-on http://localhost:3000 && npm run start\"",
 ```
 
 ## Communication between Main Process and Render Process
