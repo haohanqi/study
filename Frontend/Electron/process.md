@@ -166,3 +166,40 @@ Step 5: Start Script
 "dev-windows-start": "cross-env concurrently \"run-s build-electron-main dev\" \"wait-on http://localhost:3000 && npm run electron-app-start\"",
 ```
 
+## Communication between Main Process and Render Process
+#
+Because of security reason, we can't directly import electron method into frontend. Need to use `preload` to expose all electron methods to frontend.
+
+**Make sure in the `index.ts`, when we create main window, nodeIntegration is `false`**
+
+Example of `preload`
+```js
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
+
+contextBridge.exposeInMainWorld("electron", {
+  isWindows: process.platform === "win32",
+  methodChannel: {
+    test: () => {
+      console.info("Preload test method called!");
+    },
+    invoke: (channel: string, ...args: unknown[]): Promise<any> =>
+        ipcRenderer.invoke(channel, ...args),
+    send: (channel: string, ...args: unknown[]): void =>
+      ipcRenderer.send(channel, ...args),
+    on: (
+      channel: string,
+      listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
+    ): void => {
+      ipcRenderer.on(channel, listener);
+    },
+    once: (
+      channel: string,
+      listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
+    ): void => {
+      ipcRenderer.once(channel, listener);
+    },
+  },
+});
+```
+
+Now we can access electron method by `window.electron.methodChannel`
